@@ -11,8 +11,9 @@ const phoneNumberId = process.env.PHONE_NUMBER_ID; // El ID 938620692665249
 
 // Función para enviar mensajes
 async function sendWhatsAppMessage(toNumber, text) {
+  console.log(`--- Iniciando envío a ${toNumber} ---`);
   try {
-    await axios({
+    const response = await axios({
       method: 'POST',
       url: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
       headers: {
@@ -26,9 +27,13 @@ async function sendWhatsAppMessage(toNumber, text) {
         text: { body: text }
       }
     });
-    console.log("Respuesta enviada con éxito");
+    console.log("¡Respuesta enviada con éxito! ID:", response.data.messages[0].id);
   } catch (error) {
-    console.error("Error al enviar:", error.response ? error.response.data : error.message);
+    if (error.response) {
+      console.error("ERROR DE META:", error.response.data);
+    } else {
+      console.error("ERROR DE RED/CODIGO:", error.message);
+    }
   }
 }
 
@@ -54,7 +59,12 @@ app.post('/', async (req, res) => {
     const message = value?.messages?.[0];
 
     if (message && message.type === 'text') {
-      const from = message.from; // Número del cliente
+      
+      const from = message.from;  
+      if (from.startsWith("521")) {
+        from = "52" + from.substring(3);
+      }
+
       const userText = message.text.body.toLowerCase(); // Texto del cliente
 
       console.log(`Mensaje de ${from}: ${userText}`);
@@ -71,7 +81,7 @@ app.post('/', async (req, res) => {
       } else {
         respuestaBot = "Lo siento, no entendí eso. Intenta escribiendo 'hola' o 'menu'.";
       }
-
+      console.log(`Intentando responder a: ${from} usando el token: ${accessToken ? "TOKEN_EXISTE" : "TOKEN_VACIO"}`);
       // Enviamos la respuesta
       await sendWhatsAppMessage(from, respuestaBot);
     }
