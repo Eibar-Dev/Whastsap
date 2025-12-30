@@ -24,11 +24,27 @@ app.get('/', (req, res) => {
 });
 
 // Route for POST requests
-app.post('/', (req, res) => {
-  const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
-  console.log(`\n\nWebhook received ${timestamp}\n`);
-  console.log(JSON.stringify(req.body, null, 2));
-  res.status(200).end();
+ app.post('/', (req, res) => {
+  const body = req.body;
+
+  // Verificamos que sea un evento de WhatsApp
+  if (body.object === 'whatsapp_business_account') {
+    
+    if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
+      
+      const message = body.entry[0].changes[0].value.messages[0];
+      const from = message.from; // El número de teléfono del cliente
+      const msgBody = message.text ? message.text.body : "Mensaje no es texto"; // El texto que envió
+
+      console.log(`Mensaje recibido de ${from}: ${msgBody}`);
+
+      // AQUÍ LLAMARÍAS A UNA FUNCIÓN PARA RESPONDER (Paso 3)
+    }
+    
+    res.status(200).send('EVENT_RECEIVED');
+  } else {
+    res.status(404).end();
+  }
 });
 
 // Start the server
